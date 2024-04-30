@@ -1,4 +1,5 @@
 
+
 #USE THE BELLOW PROMPT IN CMD TO RUN FROM TERMINAL (windows + R, type "cmd", copy prompt below, right click cmd prompt)
 r'''
 
@@ -272,260 +273,265 @@ os.chdir(log_dir)
 #log_files is  alist containing names of each log file
 log_files = os.listdir()
 
-#counter for ...
-dotdotdot_counter = 1
+def run_program():
+    #counter for ...
+    dotdotdot_counter = 1
 
-#colormap for graph
-divergence_cmap = pyplot.get_cmap('seismic')
+    #colormap for graph
+    divergence_cmap = pyplot.get_cmap('seismic')
 
-#setting background color for plot
+    #setting background color for plot
 
-matplotlib.style.use('ggplot')
+    matplotlib.style.use('ggplot')
 
-def graph_setup(log_data, filename, column_names, dotdotdot_counter, norm, mode, sorted_logs_dict):
+    def graph_setup(log_data, filename, column_names, dotdotdot_counter, norm, mode, sorted_logs_dict):
+
+        for file in sorted_logs_dict:
+            if filename == file:
+                color_num = sorted_logs_dict[file]
+
+        x_val = column_names[0]
+        y_val = column_names[1]
+        pyplot.rcParams["figure.figsize"] = [10, 10]
+        pyplot.rcParams["figure.autolayout"] = True
+        pyplot.title(f"Plot of: {filename}")
+
+        #plot_divergence_cmap = divergence_cmap(numpy.linspace(1, 0, 256))a
+        pyplot.plot(log_data[x_val], log_data[y_val], c = divergence_cmap(norm(color_num/len(sorted_logs_dict))), marker="o", markersize = 0.5)
+        #
+        # time_colorbar = pyplot.colorbar(matplotlib.cm.ScalarMappable(cmap=divergence_cmap, norm=norm), ax=pyplot.gca(), orientation='vertical', label='time from battery repair')
+        # time_colorbar.set_ticks([color_line_min_days_float, color_line_max_days_float])
+        dotdotdot_counter += 1
+
+        if (mode == "in"):
+            current_figure = pyplot.gcf()
+            pyplot.xlabel(column_names[0] + " [" + data_units[desired_values[0]] + "] ")  # Label for x-axis
+            pyplot.ylabel(column_names[1] + " [" + data_units[desired_values[1]] + "] ")  # Label for y-axis
+            pyplot.get_current_fig_manager().window.showMaximized()
+            pyplot.show()
+
+        return dotdotdot_counter
+
+
+    #sorts file list by correct order and stores sorted file names in list: sorted_log_files
+    def extract_date(log_files):
+        return datetime.strptime(log_files.split('_')[1].split('.')[0], "%m-%d-%Y")
+    sorted_log_files = sorted(log_files, key=extract_date)
+
+    #aggregate time list for continuous time axis
+    time = []
+
+    #enter the values that you want graphed in this list, use the key above and type exactly (case-sensitive)
+    labels_per_line = 10
+
+    mode = input("\n\tAGGREGATE OR INDIVIDUAL?\n\tEnter Aggregate or Individual: ").lower().strip()
+    while mode not in ["aggregate", "ag", "agg", "a", "individual", "ind", "in", "i"]:
+        mode = input("\n\tERROR ERROR ERROR PICK 1 OF 2: AGGREGATE OR INDIVIDUAL?\n\tEnter Aggregate or Individual: ").lower().strip()
+    if mode in ["aggregate", "ag", "agg", "a"]:
+        mode = "ag"
+        date_range = input(f"\n\tCustom Date Range? (y/n): ")
+        if date_range.lower().strip() in ["no", "n", "all"]:
+            date_range = "all"
+        else:
+            first_date = input()
+            end_date = input()
+    elif mode in ["individual", "ind", "in", "i"]:
+        mode = "in"
+        specific_day = input("\n\tEnter Date of Interest (mm-dd-yyyy): ").strip()
+
+    print("\n\tREFERENCE NAMES OF VALUES (MUST TYPE EXACTLY):\n")
+    for chunk in range(0, len(data_labels.keys()), labels_per_line):
+        print("\n\t" + "  ||  ".join(map(str, list(data_labels.keys())[chunk : chunk + labels_per_line])) + "\n")
+    y_val = input(f"\n\n\t\tEnter Desired Values to Plot Graph:\n\t\t(y vs. x)\n\n\t\t\ty = ").lower().strip()
+    while y_val not in data_labels:
+            y_val = input(f"\n\n\t\tERROR ERROR ERROR UKNOWN VALUE\n\tPlease Re-enter Value From Table:\n\t\t(y vs. x)\n\n\t\t\ty = ").lower().strip()
+    x_val = input(f"\n\n\t\t(y = {y_val}) vs. (x = ").lower().strip()
+    while x_val not in data_labels:
+        x_val = input(f"\n\n\t\tERROR ERROR ERROR UKNOWN VALUE\n\tPlease Re-enter Value From Table:\n\t\t(y = {y_val}) vs. (x = ").lower().strip()
+    print("\n\n\t")
+    desired_values = [x_val, y_val]
+
+
+    #gets the column names corresponding to desired_values
+    if "real power" in desired_values:
+        if x_val == "real power":
+            pre1_column_names  = data_labels["real power"]
+            pre2_column_names = [data_labels[key] for key in desired_values if key != "real power"]
+            column_names = pre1_column_names + pre2_column_names
+        if y_val == "real power":
+            pre_column_names = [data_labels[key] for key in desired_values if key != "real power"]
+            column_names = pre_column_names + data_labels["real power"]
+
+    else:
+        column_names = [data_labels[key] for key in desired_values]
+    #sorted_log_files6 = sorted_log_files[::-1]
+    #organizing logs by date starting from oldest and ascending
+    sorted_logs_dict = {value: index for index, value in enumerate(sorted_log_files)}
+    list_dict = list(sorted_logs_dict.items())
+    sorted_logs_dict_6 = {}
+    for flag in range(int(len(list_dict)/6)):
+        sorted_logs_dict_6[flag+1] = list_dict[(6 * flag) : (6 * (flag + 1))]
+    #flipping dict to be able to index number by file name
+    final_sorted_logs_dict_6 = {tuple(value): key for key, value in sorted_logs_dict_6.items()}
+
+
+
+    #adding further identifiers to file name in list
+    for val in divergence_date_of_interest_range:
+        divergence_date_of_interest_range[divergence_date_of_interest_range.index(val)] = "UTC_" + val + "_.csv"
+    #finding index of beginning and ending val in list to shorten range and find median value
+    beginning_val  = sorted_log_files.index(divergence_date_of_interest_range[0])
+    ending_val = sorted_log_files.index(divergence_date_of_interest_range[1])
+    median_list = sorted_log_files[beginning_val:ending_val+1]
+    #finding median in range
+    center_of_divergence_index = numpy.median(range(len(median_list)+1))
+    closest_center = numpy.floor(center_of_divergence_index)
+    #middle log file in divergence range
+    center_of_divergence = median_list[int(center_of_divergence_index)]
+
 
     for file in sorted_logs_dict:
-        if filename == file:
-            color_num = sorted_logs_dict[file]
+        if center_of_divergence == file:
+            center_num = sorted_logs_dict[file]
 
-    x_val = column_names[0]
-    y_val = column_names[1]
-    pyplot.rcParams["figure.figsize"] = [10, 10]
-    pyplot.rcParams["figure.autolayout"] = True
-    pyplot.title(f"Plot of: {filename}")
+    norm = matplotlib.colors.TwoSlopeNorm(vmin = 0, vcenter = center_num / len(sorted_logs_dict), vmax = 1)
 
-    #plot_divergence_cmap = divergence_cmap(numpy.linspace(1, 0, 256))a
-    pyplot.plot(log_data[x_val], log_data[y_val], c = divergence_cmap(norm(color_num/len(sorted_logs_dict))), marker="o", markersize = 0.5)
+    if (mode == "ag"):
+        fig = pyplot.figure()
+        time_colorbar = pyplot.colorbar(matplotlib.cm.ScalarMappable(cmap=divergence_cmap, norm = norm), ax=pyplot.gca(), orientation='vertical')
+        time_colorbar.set_label('Time From Battery Repair',fontsize = 20)
+        time_colorbar.set_ticks([])
+    else:
+        divergence_cmap = pyplot.get_cmap('viridis')
+
+    print(f"plotting {y_val} vs. {x_val}...\n")
+
+    #main exectuion loop
+    for filename in sorted_log_files:
+
+        if mode == "in":
+            filename = f"UTC_{specific_day}_.csv"
+            datetimeobj = datetime.strptime(specific_day, '%m-%d-%Y')
+            mindayobj = datetime.strptime(sorted_log_files[0][4:14], '%m-%d-%Y')
+            while filename not in sorted_log_files:
+                if (datetimeobj - mindayobj) < timedelta():
+                    datetimeobj += timedelta(days=1)
+                else:
+                    datetimeobj -= timedelta(days=1)
+                filename_date = datetime.strftime(datetimeobj, '%m-%d-%Y')
+                filename = f"UTC_{filename_date}_.csv"
+            pyplot.title(filename)
+
+        if (int(dotdotdot_counter) % 10 == 0) and (int(dotdotdot_counter) != 0):
+            print(".", end='')
+            if int(dotdotdot_counter) % 30 == 0:
+                print(" ", end = '')
+                if int(dotdotdot_counter) % 600 == 0:
+                    print("\n\t")
+        elif (int(dotdotdot_counter) == 0):
+            print("\t")
+
+        error_occurred = False  # error flag
+
+        try:
+            graph_data_points = [data_labels[key] for key in desired_values]
+            pandas.set_option('display.max_rows', None)
+            if "real power" in desired_values:
+                log_data = pandas.read_csv(filename, usecols = column_names,skiprows = 0, encoding = "ISO-8859-1")
+                log_data['BMS - System Voltage'] = -(((log_data['BMS - System Voltage']) * (log_data['BMS - System Current']))/ 1000)
+            else:
+                log_data = pandas.read_csv(filename, usecols = column_names,skiprows = 0, encoding = "ISO-8859-1")#, names = desired_values)#.to_string()
+
+            if ("time" in desired_values) and (mode == "ag"):
+                new_val = log_data['Time (24Hr)'] = pandas.to_datetime(log_data['Time (24Hr)'], format='%H:%M')  # Adjust format if needed
+                log_data['Time (24Hr)'] = log_data['Time (24Hr)'].apply(lambda x: x.replace(year=int(filename[10:14]), month=int(filename[4:6]), day=int(filename[7:9])))
+            elif "time" in desired_values:
+                new_val = log_data['Time (24Hr)'] = pandas.to_datetime(log_data['Time (24Hr)'], format='%H:%M')
+                log_data['Time (24Hr)'] = new_val.dt.strftime('%H')
+
+                #log_data.extend(log_data['Time'].dt.time.tolist())
+            # if dotdotdot_counter == 1:
+            #     color_line_min = log_data['Time (24Hr)'].apply(lambda x: x.replace(year=int(filename[10:14]), month=int(filename[4:6]), day=int(filename[7:9]))).max()
+
+            dotdotdot_counter = graph_setup(log_data, filename, column_names, dotdotdot_counter, norm, mode, sorted_logs_dict)
+
+        except Exception as e:
+            if not error_occurred:  # prints error only once for each file
+                # prints the name of the file that caused an error
+                print(f"Error occurred while processing file: {filename} in directory: {os.path.abspath(filename)}")
+                error_occurred = True  # sets flag to True to avoid repeated printing
+            print(f"Error details: {e}")
+        if mode == "in":
+            break
+
+    print("..done")
+    if "soc" in desired_values:
+        if "soc" == desired_values[0]:  # If "soc" is the x-axis value
+            pyplot.gca().invert_xaxis()  # Invert the x-axis
+        elif "soc" == desired_values[1]:  # If "soc" is the y-axis value
+            pyplot.gca().invert_yaxis()  # Invert the y-axis
+
+    # maybe add this as first argument in function above matplotlib.cm.ScalarMappable(cmap=divergence_cmap)
+    current_figure = pyplot.gcf()
+    pyplot.get_current_fig_manager().window.showMaximized()
+
+
+
+    if mode == "ag":
+        pyplot.title("Aggregate Plot", fontsize=30)
+
+
+    if len(column_names) == 3:
+        if column_names.index("BMS - System Current") == 2:
+            pyplot.ylabel(f"Calculated Power Out [{data_units['real power']}]", fontsize=20)
+            pyplot.xlabel(column_names[0] + " [" + data_units[desired_values[0]] + "] ", fontsize=20)
+
+        elif column_names.index("BMS - System Current") == 1:
+            pyplot.xlabel(f"Calculated Power Out [{data_units['real power']}] ", fontsize=20)
+            pyplot.ylabel(column_names[2] + " [" + data_units[desired_values[2]] + "] ", fontsize=20)
+
+    else:
+        pyplot.xlabel(column_names[0] + " [" + data_units[desired_values[0]] + "] ", fontsize=20)  # Label for x-axis
+        pyplot.ylabel(column_names[1] + " [" + data_units[desired_values[1]] + "] ", fontsize=20)  # Label for y-axis
+
+    # Set the locator
+    locator = matplotlib.dates.MonthLocator()  # every month
+
+    #pyplot.gca().xaxis.set_major_locator(matplotlib.dates)
+    pyplot.gca().xaxis.set_minor_locator(matplotlib.dates.MonthLocator())
+    pyplot.locator_params(axis='y', nbins=50)
+    pyplot.xticks(fontsize=12)
+    pyplot.yticks(fontsize=12)
+
     #
-    # time_colorbar = pyplot.colorbar(matplotlib.cm.ScalarMappable(cmap=divergence_cmap, norm=norm), ax=pyplot.gca(), orientation='vertical', label='time from battery repair')
+    # color_line_max = log_data['Time (24Hr)'].apply(lambda x: x.replace(year=int(filename[10:14]), month=int(filename[4:6]), day=int(filename[7:9]))).max()
+    # color_line_max_days_float = abs((color_line_max - unix_epoch).days)
+    #
+    #
+    # color_line_min_days_float = abs((color_line_min - unix_epoch).days)
+    # color_line_max_days_float = abs((color_line_max - unix_epoch).days)
+    #
+    # time_colorbar = pyplot.colorbar(matplotlib.cm.ScalarMappable(cmap=divergence_cmap, norm=norm), ax=pyplot.gca(),orientation='vertical', label='time from battery repair')
     # time_colorbar.set_ticks([color_line_min_days_float, color_line_max_days_float])
-    dotdotdot_counter += 1
 
-    if (mode == "in"):
-        current_figure = pyplot.gcf()
-        pyplot.xlabel(column_names[0] + " [" + data_units[desired_values[0]] + "] ")  # Label for x-axis
-        pyplot.ylabel(column_names[1] + " [" + data_units[desired_values[1]] + "] ")  # Label for y-axis
-        pyplot.get_current_fig_manager().window.showMaximized()
+    # try:
+    #     time_colorbar.set_ticklabels([color_line_min.strftime('%Y-%m-%d'), color_line_max.strftime('%Y-%m-%d')])
+    # except ValueError as e:
+    #     print("Error converting timestamps to strings:", e)
+
+
+    if mode == "ag":
         pyplot.show()
 
-    return dotdotdot_counter
+        #save_decision = input()
 
+    # estimate for when battery lost it's power
 
-#sorts file list by correct order and stores sorted file names in list: sorted_log_files
-def extract_date(log_files):
-    return datetime.strptime(log_files.split('_')[1].split('.')[0], "%m-%d-%Y")
-sorted_log_files = sorted(log_files, key=extract_date)
+run_program()
 
-#aggregate time list for continuous time axis
-time = []
-
-#enter the values that you want graphed in this list, use the key above and type exactly (case-sensitive)
-labels_per_line = 10
-
-mode = input("\n\tAGGREGATE OR INDIVIDUAL?\n\tEnter Aggregate or Individual: ").lower().strip()
-while mode not in ["aggregate", "ag", "agg", "a", "individual", "ind", "in", "i"]:
-    mode = input("\n\tERROR ERROR ERROR PICK 1 OF 2: AGGREGATE OR INDIVIDUAL?\n\tEnter Aggregate or Individual: ").lower().strip()
-if mode in ["aggregate", "ag", "agg", "a"]:
-    mode = "ag"
-elif mode in ["individual", "ind", "in", "i"]:
-    mode = "in"
-    specific_day = input("\n\tEnter Date of Interest (mm-dd-yyyy): ").strip()
-
-print("\n\tREFERENCE NAMES OF VALUES (MUST TYPE EXACTLY):\n")
-for chunk in range(0, len(data_labels.keys()), labels_per_line):
-    print("\n\t" + "  ||  ".join(map(str, list(data_labels.keys())[chunk : chunk + labels_per_line])) + "\n")
-y_val = input(f"\n\n\t\tEnter Desired Values to Plot Graph:\n\t\t(y vs. x)\n\n\t\t\ty = ").lower().strip()
-while y_val not in data_labels:
-        y_val = input(f"\n\n\t\tERROR ERROR ERROR UKNOWN VALUE\n\tPlease Re-enter Value From Table:\n\t\t(y vs. x)\n\n\t\t\ty = ").lower().strip()
-x_val = input(f"\n\n\t\t(y = {y_val}) vs. (x = ").lower().strip()
-while x_val not in data_labels:
-    x_val = input(f"\n\n\t\tERROR ERROR ERROR UKNOWN VALUE\n\tPlease Re-enter Value From Table:\n\t\t(y = {y_val}) vs. (x = ").lower().strip()
-print("\n\n\t")
-desired_values = [x_val, y_val]
-
-
-#gets the column names corresponding to desired_values
-if "real power" in desired_values:
-    if x_val == "real power":
-        pre1_column_names  = data_labels["real power"]
-        pre2_column_names = [data_labels[key] for key in desired_values if key != "real power"]
-        column_names = pre1_column_names + pre2_column_names
-    if y_val == "real power":
-        pre_column_names = [data_labels[key] for key in desired_values if key != "real power"]
-        column_names = pre_column_names + data_labels["real power"]
-
-else:
-    column_names = [data_labels[key] for key in desired_values]
-#sorted_log_files6 = sorted_log_files[::-1]
-#organizing logs by date starting from oldest and ascending
-sorted_logs_dict = {value: index for index, value in enumerate(sorted_log_files)}
-list_dict = list(sorted_logs_dict.items())
-sorted_logs_dict_6 = {}
-for flag in range(int(len(list_dict)/6)):
-    sorted_logs_dict_6[flag+1] = list_dict[(6 * flag) : (6 * (flag + 1))]
-#flipping dict to be able to index number by file name
-final_sorted_logs_dict_6 = {tuple(value): key for key, value in sorted_logs_dict_6.items()}
-
-
-
-#adding further identifiers to file name in list
-for val in divergence_date_of_interest_range:
-    divergence_date_of_interest_range[divergence_date_of_interest_range.index(val)] = "UTC_" + val + "_.csv"
-#finding index of beginning and ending val in list to shorten range and find median value
-beginning_val  = sorted_log_files.index(divergence_date_of_interest_range[0])
-ending_val = sorted_log_files.index(divergence_date_of_interest_range[1])
-median_list = sorted_log_files[beginning_val:ending_val+1]
-#finding median in range
-center_of_divergence_index = numpy.median(range(len(median_list)+1))
-closest_center = numpy.floor(center_of_divergence_index)
-#middle log file in divergence range
-center_of_divergence = median_list[int(center_of_divergence_index)]
-
-
-for file in sorted_logs_dict:
-    if center_of_divergence == file:
-        center_num = sorted_logs_dict[file]
-
-norm = matplotlib.colors.TwoSlopeNorm(vmin = 0, vcenter = center_num / len(sorted_logs_dict), vmax = 1)
-
-if (mode == "ag"):
-    fig = pyplot.figure()
-    time_colorbar = pyplot.colorbar(matplotlib.cm.ScalarMappable(cmap=divergence_cmap, norm = norm), ax=pyplot.gca(), orientation='vertical')
-    time_colorbar.set_label('Time From Battery Repair',fontsize = 20)
-    time_colorbar.set_ticks([])
-else:
-    divergence_cmap = pyplot.get_cmap('viridis')
-
-print(f"plotting {y_val} vs. {x_val}...\n")
-
-#main exectuion loop
-for filename in sorted_log_files:
-
-    if mode == "in":
-        filename = f"UTC_{specific_day}_.csv"
-        datetimeobj = datetime.strptime(specific_day, '%m-%d-%Y')
-        mindayobj = datetime.strptime(sorted_log_files[0][4:14], '%m-%d-%Y')
-        while filename not in sorted_log_files:
-            if (datetimeobj - mindayobj) < timedelta():
-                datetimeobj += timedelta(days=1)
-            else:
-                datetimeobj -= timedelta(days=1)
-            filename_date = datetime.strftime(datetimeobj, '%m-%d-%Y')
-            filename = f"UTC_{filename_date}_.csv"
-        pyplot.title(filename)
-
-    if (int(dotdotdot_counter) % 10 == 0) and (int(dotdotdot_counter) != 0):
-        print(".", end='')
-        if int(dotdotdot_counter) % 30 == 0:
-            print(" ", end = '')
-            if int(dotdotdot_counter) % 600 == 0:
-                print("\n\t")
-    elif (int(dotdotdot_counter) == 0):
-        print("\t")
-
-    error_occurred = False  # error flag
-
-    try:
-        graph_data_points = [data_labels[key] for key in desired_values]
-        pandas.set_option('display.max_rows', None)
-        if "real power" in desired_values:
-            log_data = pandas.read_csv(filename, usecols = column_names,skiprows = 0, encoding = "ISO-8859-1")
-            log_data['BMS - System Voltage'] = -(((log_data['BMS - System Voltage']) * (log_data['BMS - System Current']))/ 1000)
-        else:
-            log_data = pandas.read_csv(filename, usecols = column_names,skiprows = 0, encoding = "ISO-8859-1")#, names = desired_values)#.to_string()
-
-        if ("time" in desired_values) and (mode == "ag"):
-            new_val = log_data['Time (24Hr)'] = pandas.to_datetime(log_data['Time (24Hr)'], format='%H:%M')  # Adjust format if needed
-            log_data['Time (24Hr)'] = log_data['Time (24Hr)'].apply(lambda x: x.replace(year=int(filename[10:14]), month=int(filename[4:6]), day=int(filename[7:9])))
-        elif "time" in desired_values:
-            new_val = log_data['Time (24Hr)'] = pandas.to_datetime(log_data['Time (24Hr)'], format='%H:%M')
-            log_data['Time (24Hr)'] = new_val.dt.strftime('%H')
-
-            #log_data.extend(log_data['Time'].dt.time.tolist())
-        # if dotdotdot_counter == 1:
-        #     color_line_min = log_data['Time (24Hr)'].apply(lambda x: x.replace(year=int(filename[10:14]), month=int(filename[4:6]), day=int(filename[7:9]))).max()
-
-        dotdotdot_counter = graph_setup(log_data, filename, column_names, dotdotdot_counter, norm, mode, sorted_logs_dict)
-
-    except Exception as e:
-        if not error_occurred:  # prints error only once for each file
-            # prints the name of the file that caused an error
-            print(f"Error occurred while processing file: {filename} in directory: {os.path.abspath(filename)}")
-            error_occurred = True  # sets flag to True to avoid repeated printing
-        print(f"Error details: {e}")
-    if mode == "in":
-        break
-
-print("..done")
-if "soc" in desired_values:
-    if "soc" == desired_values[0]:  # If "soc" is the x-axis value
-        pyplot.gca().invert_xaxis()  # Invert the x-axis
-    elif "soc" == desired_values[1]:  # If "soc" is the y-axis value
-        pyplot.gca().invert_yaxis()  # Invert the y-axis
-
-# maybe add this as first argument in function above matplotlib.cm.ScalarMappable(cmap=divergence_cmap)
-current_figure = pyplot.gcf()
-pyplot.get_current_fig_manager().window.showMaximized()
-
-
-
-if mode == "ag":
-    pyplot.title("Aggregate Plot", fontsize=30)
-
-
-if len(column_names) == 3:
-    if column_names.index("BMS - System Current") == 2:
-        pyplot.ylabel(f"Calculated Power Out [{data_units['real power']}]", fontsize=20)
-        pyplot.xlabel(column_names[0] + " [" + data_units[desired_values[0]] + "] ", fontsize=20)
-
-    elif column_names.index("BMS - System Current") == 1:
-        pyplot.xlabel(f"Calculated Power Out [{data_units['real power']}] ", fontsize=20)
-        pyplot.ylabel(column_names[2] + " [" + data_units[desired_values[2]] + "] ", fontsize=20)
-
-else:
-    pyplot.xlabel(column_names[0] + " [" + data_units[desired_values[0]] + "] ", fontsize=20)  # Label for x-axis
-    pyplot.ylabel(column_names[1] + " [" + data_units[desired_values[1]] + "] ", fontsize=20)  # Label for y-axis
-
-# Set the locator
-locator = matplotlib.dates.MonthLocator()  # every month
-
-#pyplot.gca().xaxis.set_major_locator(matplotlib.dates)
-pyplot.gca().xaxis.set_minor_locator(matplotlib.dates.MonthLocator())
-pyplot.locator_params(axis='y', nbins=50)
-pyplot.xticks(fontsize=12)
-pyplot.yticks(fontsize=12)
-
-#
-# color_line_max = log_data['Time (24Hr)'].apply(lambda x: x.replace(year=int(filename[10:14]), month=int(filename[4:6]), day=int(filename[7:9]))).max()
-# color_line_max_days_float = abs((color_line_max - unix_epoch).days)
-#
-#
-# color_line_min_days_float = abs((color_line_min - unix_epoch).days)
-# color_line_max_days_float = abs((color_line_max - unix_epoch).days)
-#
-# time_colorbar = pyplot.colorbar(matplotlib.cm.ScalarMappable(cmap=divergence_cmap, norm=norm), ax=pyplot.gca(),orientation='vertical', label='time from battery repair')
-# time_colorbar.set_ticks([color_line_min_days_float, color_line_max_days_float])
-
-# try:
-#     time_colorbar.set_ticklabels([color_line_min.strftime('%Y-%m-%d'), color_line_max.strftime('%Y-%m-%d')])
-# except ValueError as e:
-#     print("Error converting timestamps to strings:", e)
-
-if mode == "ag":
-    pyplot.show()
-
-    #save_decision = input()
-
-# estimate for when battery lost it's power
-def rerun_program():
-    # Call the Python script using subprocess
-    for rootdir, _, files in os.walk('.'):  # Change '.' to the appropriate directory if needed
-        if __file__ in files:
-            rerunpath = os.path.join(rootdir, __file__)
-            subprocess.run(['python', rerunpath])
-            break
 decision = input("plot again? (y/n): ")
+
 if decision == "y":
-    rerun_program()
+    run_program()
 else:
     sys.exit()
